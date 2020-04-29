@@ -220,58 +220,6 @@ func testPipelineClientDo(t *testing.T, c *PipelineClient) {
 	ReleaseResponse(resp)
 }
 
-func TestClientDoTimeoutDisableNormalizing(t *testing.T) {
-	ln := fasthttputil.NewInmemoryListener()
-
-	s := &Server{
-		Handler: func(ctx *RequestCtx) {
-			ctx.Response.Header.Set("foo-BAR", "baz")
-		},
-		DisableHeaderNamesNormalizing: true,
-	}
-
-	serverStopCh := make(chan struct{})
-	go func() {
-		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-		close(serverStopCh)
-	}()
-
-	c := &Client{
-		Dial: func(addr string) (net.Conn, error) {
-			return ln.Dial()
-		},
-		DisableHeaderNamesNormalizing: true,
-	}
-
-	var req Request
-	req.SetRequestURI("http://aaaai.com/bsdf?sddfsd")
-	var resp Response
-	for i := 0; i < 5; i++ {
-		if err := c.DoTimeout(&req, &resp, time.Second); err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-		hv := resp.Header.Peek("foo-BAR")
-		if string(hv) != "baz" {
-			t.Fatalf("unexpected header value: %q. Expecting %q", hv, "baz")
-		}
-		hv = resp.Header.Peek("Foo-Bar")
-		if len(hv) > 0 {
-			t.Fatalf("unexpected non-empty header value %q", hv)
-		}
-	}
-
-	if err := ln.Close(); err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	select {
-	case <-serverStopCh:
-	case <-time.After(time.Second):
-		t.Fatalf("timeout")
-	}
-}
-
 func TestHostClientPendingRequests(t *testing.T) {
 	const concurrency = 10
 	doneCh := make(chan struct{})
