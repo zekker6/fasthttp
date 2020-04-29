@@ -211,6 +211,9 @@ type Client struct {
 	// By default response body size is unlimited.
 	MaxResponseBodySize int
 
+	// The maximum number of idempotent requests the client can make.
+	MaxIdempotentRequestAttempts int
+
 	mLock sync.Mutex
 	m     map[string]*HostClient
 	ms    map[string]*HostClient
@@ -365,19 +368,20 @@ func (c *Client) Do(req *Request, resp *Response) error {
 	hc := m[string(host)]
 	if hc == nil {
 		hc = &HostClient{
-			Addr:                addMissingPort(string(host), isTLS),
-			Name:                c.Name,
-			Dial:                c.Dial,
-			DialDualStack:       c.DialDualStack,
-			IsTLS:               isTLS,
-			TLSConfig:           c.TLSConfig,
-			MaxConns:            c.MaxConnsPerHost,
-			MaxIdleConnDuration: c.MaxIdleConnDuration,
-			ReadBufferSize:      c.ReadBufferSize,
-			WriteBufferSize:     c.WriteBufferSize,
-			ReadTimeout:         c.ReadTimeout,
-			WriteTimeout:        c.WriteTimeout,
-			MaxResponseBodySize: c.MaxResponseBodySize,
+			Addr:                         addMissingPort(string(host), isTLS),
+			Name:                         c.Name,
+			Dial:                         c.Dial,
+			DialDualStack:                c.DialDualStack,
+			IsTLS:                        isTLS,
+			TLSConfig:                    c.TLSConfig,
+			MaxConns:                     c.MaxConnsPerHost,
+			MaxIdleConnDuration:          c.MaxIdleConnDuration,
+			ReadBufferSize:               c.ReadBufferSize,
+			WriteBufferSize:              c.WriteBufferSize,
+			ReadTimeout:                  c.ReadTimeout,
+			WriteTimeout:                 c.WriteTimeout,
+			MaxResponseBodySize:          c.MaxResponseBodySize,
+			MaxIdempotentRequestAttempts: c.MaxIdempotentRequestAttempts,
 		}
 		m[string(host)] = hc
 		if len(m) == 1 {
@@ -531,6 +535,9 @@ type HostClient struct {
 	//
 	// By default response body size is unlimited.
 	MaxResponseBodySize int
+
+	// The maximum number of idempotent requests the client can make.
+	MaxIdempotentRequestAttempts int
 
 	clientName  atomic.Value
 	lastUseTime uint32
@@ -932,7 +939,10 @@ var errorChPool sync.Pool
 func (c *HostClient) Do(req *Request, resp *Response) error {
 	var err error
 	var retry bool
-	const maxAttempts = 5
+	maxAttempts := c.MaxIdempotentRequestAttempts
+	if maxAttempts <= 0 {
+		maxAttempts = 5
+	}
 	attempts := 0
 
 	atomic.AddUint64(&c.pendingRequests, 1)
