@@ -750,19 +750,11 @@ func TestClientNonIdempotentRetry(t *testing.T) {
 		},
 	}
 
-	// This POST must succeed, since the readErrorConn closes
-	// the connection before sending any response.
-	// So the client must retry non-idempotent request.
+	// This POST must fail.
 	dialsCount = 0
 	statusCode, body, err := c.Post(nil, "http://foobar/a/b", nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if statusCode != 345 {
-		t.Fatalf("unexpected status code: %d. Expecting 345", statusCode)
-	}
-	if string(body) != "0123456" {
-		t.Fatalf("unexpected body: %q. Expecting %q", body, "0123456")
+	if err == nil {
+		t.Fatalf("expecting non-nil error")
 	}
 
 	// Verify that idempotent GET succeeds.
