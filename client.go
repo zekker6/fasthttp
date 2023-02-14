@@ -319,7 +319,7 @@ func (c *Client) DoTimeout(req *Request, resp *Response, timeout time.Duration) 
 func (c *Client) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
-	return clientDoDeadline(req, resp, ctx, c)
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
 // Do performs the given http request and fills the given http response.
@@ -874,7 +874,7 @@ func (c *HostClient) DoTimeout(req *Request, resp *Response, timeout time.Durati
 func (c *HostClient) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
-	return clientDoDeadline(req, resp, ctx, c)
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
 // DoCtx performs the given request and waits for response until
@@ -895,18 +895,18 @@ func (c *HostClient) DoDeadline(req *Request, resp *Response, deadline time.Time
 //
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
-func (c *HostClient) DoCtx(req *Request, resp *Response, ctx context.Context) error {
-	return clientDoDeadline(req, resp, ctx, c)
+func (c *HostClient) DoCtx(ctx context.Context, req *Request, resp *Response) error {
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
 func clientDoTimeout(req *Request, resp *Response, timeout time.Duration, c clientDoer) error {
 	deadline := time.Now().Add(timeout)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
-	return clientDoDeadline(req, resp, ctx, c)
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
-func clientDoDeadline(req *Request, resp *Response, ctx context.Context, c clientDoer) error {
+func clientDoDeadline(ctx context.Context, req *Request, resp *Response, c clientDoer) error {
 	d, ok := ctx.Deadline()
 	timeout := -time.Since(d)
 	if timeout <= 0 || !ok {
