@@ -940,7 +940,6 @@ func clientDoDeadline(ctx context.Context, req *Request, resp *Response, c clien
 		ch <- c.Do(reqCopy, respCopy)
 	}()
 
-	tc := acquireTimer(timeout)
 	var err error
 	select {
 	case err = <-ch:
@@ -951,15 +950,12 @@ func clientDoDeadline(ctx context.Context, req *Request, resp *Response, c clien
 		ReleaseResponse(respCopy)
 		ReleaseRequest(reqCopy)
 		errorChPool.Put(chv)
-	case <-tc.C:
-		err = ErrTimeout
 	case <-ctx.Done():
 		err = ctx.Err()
 		if errors.Is(err, context.DeadlineExceeded) {
 			err = ErrTimeout
 		}
 	}
-	releaseTimer(tc)
 
 	return err
 }
