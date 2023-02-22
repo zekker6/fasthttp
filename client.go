@@ -317,9 +317,7 @@ func (c *Client) DoTimeout(req *Request, resp *Response, timeout time.Duration) 
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *Client) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
-	defer cancel()
-	return clientDoDeadline(ctx, req, resp, c)
+	return clientDoDeadline(req, resp, deadline, c)
 }
 
 // Do performs the given http request and fills the given http response.
@@ -872,9 +870,7 @@ func (c *HostClient) DoTimeout(req *Request, resp *Response, timeout time.Durati
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *HostClient) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
-	defer cancel()
-	return clientDoDeadline(ctx, req, resp, c)
+	return clientDoDeadline(req, resp, deadline, c)
 }
 
 // DoCtx performs the given request and waits for response until
@@ -896,23 +892,21 @@ func (c *HostClient) DoDeadline(req *Request, resp *Response, deadline time.Time
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *HostClient) DoCtx(ctx context.Context, req *Request, resp *Response) error {
-	return clientDoDeadline(ctx, req, resp, c)
+	return clientDoCtx(ctx, req, resp, c)
 }
 
 func clientDoTimeout(req *Request, resp *Response, timeout time.Duration, c clientDoer) error {
 	deadline := time.Now().Add(timeout)
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
-	defer cancel()
-	return clientDoDeadline(ctx, req, resp, c)
+	return clientDoDeadline(req, resp, deadline, c)
 }
 
-func clientDoDeadline(ctx context.Context, req *Request, resp *Response, c clientDoer) error {
-	d, ok := ctx.Deadline()
-	timeout := -time.Since(d)
-	if timeout <= 0 || !ok {
-		return ErrTimeout
-	}
+func clientDoDeadline(req *Request, resp *Response, deadline time.Time, c clientDoer) error {
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	return clientDoCtx(ctx, req, resp, c)
+}
 
+func clientDoCtx(ctx context.Context, req *Request, resp *Response, c clientDoer) error {
 	var ch chan error
 	chv := errorChPool.Get()
 	if chv == nil {
