@@ -140,7 +140,7 @@ func testPipelineClientDoConcurrent(t *testing.T, concurrency int, maxBatchDelay
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -234,7 +234,7 @@ func TestHostClientPendingRequests(t *testing.T) {
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -334,7 +334,7 @@ func TestHostClientMaxConnsWithDeadline(t *testing.T) {
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -364,18 +364,18 @@ func TestHostClientMaxConnsWithDeadline(t *testing.T) {
 						time.Sleep(time.Millisecond)
 						continue
 					}
-					t.Fatalf("unexpected error: %s", err)
+					panic(fmt.Errorf("unexpected error: %s", err))
 				}
 				break
 			}
 
 			if resp.StatusCode() != StatusOK {
-				t.Fatalf("unexpected status code %d. Expecting %d", resp.StatusCode(), StatusOK)
+				panic(fmt.Errorf("unexpected status code %d. Expecting %d", resp.StatusCode(), StatusOK))
 			}
 
 			body := resp.Body()
 			if string(body) != "foo" {
-				t.Fatalf("unexpected body %q. Expecting %q", body, "abcd")
+				panic(fmt.Errorf("unexpected body %q. Expecting %q", body, "abcd"))
 			}
 		}()
 	}
@@ -410,7 +410,7 @@ func TestHostClientMaxConnDuration(t *testing.T) {
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -463,7 +463,7 @@ func TestHostClientMultipleAddrs(t *testing.T) {
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -535,7 +535,7 @@ func TestClientFollowRedirects(t *testing.T) {
 	serverStopCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverStopCh)
 	}()
@@ -1204,7 +1204,7 @@ func startEchoServerExt(t *testing.T, network, addr string, isTLS bool) *testEch
 	go func() {
 		err := s.Serve(ln)
 		if err != nil {
-			t.Fatalf("unexpected error returned from Serve(): %s", err)
+			panic(fmt.Errorf("unexpected error returned from Serve(): %s", err))
 		}
 		close(ch)
 	}()

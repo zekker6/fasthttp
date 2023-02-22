@@ -199,7 +199,7 @@ func benchmarkClientGetEndToEndTCP(b *testing.B, parallelism int) {
 	ch := make(chan struct{})
 	go func() {
 		if err := Serve(ln, fasthttpEchoHandler); err != nil {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -260,7 +260,7 @@ func benchmarkNetHTTPClientGetEndToEndTCP(b *testing.B, parallelism int) {
 	go func() {
 		if err := http.Serve(ln, http.HandlerFunc(nethttpEchoHandler)); err != nil && !strings.Contains(
 			err.Error(), "use of closed network connection") {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -328,7 +328,7 @@ func benchmarkClientGetEndToEndInmemory(b *testing.B, parallelism int) {
 	ch := make(chan struct{})
 	go func() {
 		if err := Serve(ln, fasthttpEchoHandler); err != nil {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -389,7 +389,7 @@ func benchmarkNetHTTPClientGetEndToEndInmemory(b *testing.B, parallelism int) {
 	go func() {
 		if err := http.Serve(ln, http.HandlerFunc(nethttpEchoHandler)); err != nil && !strings.Contains(
 			err.Error(), "use of closed network connection") {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -452,7 +452,7 @@ func benchmarkClientEndToEndBigResponseInmemory(b *testing.B, parallelism int) {
 	ch := make(chan struct{})
 	go func() {
 		if err := Serve(ln, h); err != nil {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -511,7 +511,7 @@ func benchmarkNetHTTPClientEndToEndBigResponseInmemory(b *testing.B, parallelism
 	go func() {
 		if err := http.Serve(ln, http.HandlerFunc(h)); err != nil && !strings.Contains(
 			err.Error(), "use of closed network connection") {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()
@@ -584,7 +584,7 @@ func benchmarkPipelineClient(b *testing.B, parallelism int) {
 	ch := make(chan struct{})
 	go func() {
 		if err := Serve(ln, h); err != nil {
-			b.Fatalf("error when serving requests: %s", err)
+			panic(fmt.Errorf("error when serving requests: %s", err))
 		}
 		close(ch)
 	}()

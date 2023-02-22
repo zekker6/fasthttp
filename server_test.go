@@ -211,7 +211,7 @@ func TestServerResponseServerHeader(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -220,28 +220,28 @@ func TestServerResponseServerHeader(t *testing.T) {
 	go func() {
 		c, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if _, err = c.Write([]byte("GET / HTTP/1.1\r\nHost: aa\r\n\r\n")); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		br := bufio.NewReader(c)
 		var resp Response
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 
 		if resp.StatusCode() != StatusNotFound {
-			t.Fatalf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusNotFound)
+			panic(fmt.Errorf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusNotFound))
 		}
 		if string(resp.Body()) != "404 Page not found" {
-			t.Fatalf("unexpected body: %q. Expecting %q", resp.Body(), "404 Page not found")
+			panic(fmt.Errorf("unexpected body: %q. Expecting %q", resp.Body(), "404 Page not found"))
 		}
 		if string(resp.Header.Server()) != serverName {
-			t.Fatalf("unexpected server header: %q. Expecting %q", resp.Header.Server(), serverName)
+			panic(fmt.Errorf("unexpected server header: %q. Expecting %q", resp.Header.Server(), serverName))
 		}
 		if err = c.Close(); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(clientCh)
 	}()
@@ -290,7 +290,7 @@ func TestServerResponseBodyStream(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := Serve(ln, h); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -299,37 +299,37 @@ func TestServerResponseBodyStream(t *testing.T) {
 	go func() {
 		c, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if _, err = c.Write([]byte("GET / HTTP/1.1\r\nHost: aa\r\n\r\n")); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		br := bufio.NewReader(c)
 		var respH ResponseHeader
 		if err = respH.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if respH.StatusCode() != StatusOK {
-			t.Fatalf("unexpected status code: %d. Expecting %d", respH.StatusCode(), StatusOK)
+			panic(fmt.Errorf("unexpected status code: %d. Expecting %d", respH.StatusCode(), StatusOK))
 		}
 
 		buf := make([]byte, 1024)
 		n, err := br.Read(buf)
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		b := buf[:n]
 		if string(b) != "5\r\nfirst\r\n" {
-			t.Fatalf("unexpected result %q. Expecting %q", b, "5\r\nfirst\r\n")
+			panic(fmt.Errorf("unexpected result %q. Expecting %q", b, "5\r\nfirst\r\n"))
 		}
 		close(readyCh)
 
 		tail, err := ioutil.ReadAll(br)
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if string(tail) != "6\r\nsecond\r\n0\r\n\r\n" {
-			t.Fatalf("unexpected tail %q. Expecting %q", tail, "6\r\nsecond\r\n0\r\n\r\n")
+			panic(fmt.Errorf("unexpected tail %q. Expecting %q", tail, "6\r\nsecond\r\n0\r\n\r\n"))
 		}
 
 		close(clientCh)
@@ -365,7 +365,7 @@ func TestServerDisableKeepalive(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -374,33 +374,33 @@ func TestServerDisableKeepalive(t *testing.T) {
 	go func() {
 		c, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if _, err = c.Write([]byte("GET / HTTP/1.1\r\nHost: aa\r\n\r\n")); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		br := bufio.NewReader(c)
 		var resp Response
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if resp.StatusCode() != StatusOK {
-			t.Fatalf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusOK)
+			panic(fmt.Errorf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusOK))
 		}
 		if !resp.ConnectionClose() {
-			t.Fatalf("expecting 'Connection: close' response header")
+			panic(fmt.Errorf("expecting 'Connection: close' response header"))
 		}
 		if string(resp.Body()) != "OK" {
-			t.Fatalf("unexpected body: %q. Expecting %q", resp.Body(), "OK")
+			panic(fmt.Errorf("unexpected body: %q. Expecting %q", resp.Body(), "OK"))
 		}
 
 		// make sure the connection is closed
 		data, err := ioutil.ReadAll(br)
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if len(data) > 0 {
-			t.Fatalf("unexpected data read from the connection: %q. Expecting empty data", data)
+			panic(fmt.Errorf("unexpected data read from the connection: %q. Expecting empty data", data))
 		}
 
 		close(clientCh)
@@ -440,7 +440,7 @@ func TestServerMaxConnsPerIPLimit(t *testing.T) {
 			Listener: ln,
 		}
 		if err := s.Serve(fakeLN); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -449,35 +449,35 @@ func TestServerMaxConnsPerIPLimit(t *testing.T) {
 	go func() {
 		c1, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		c2, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		br := bufio.NewReader(c2)
 		var resp Response
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if resp.StatusCode() != StatusTooManyRequests {
-			t.Fatalf("unexpected status code for the second connection: %d. Expecting %d",
-				resp.StatusCode(), StatusTooManyRequests)
+			panic(fmt.Errorf("unexpected status code for the second connection: %d. Expecting %d",
+				resp.StatusCode(), StatusTooManyRequests))
 		}
 
 		if _, err = c1.Write([]byte("GET / HTTP/1.1\r\nHost: aa\r\n\r\n")); err != nil {
-			t.Fatalf("unexpected error when writing to the first connection: %s", err)
+			panic(fmt.Errorf("unexpected error when writing to the first connection: %s", err))
 		}
 		br = bufio.NewReader(c1)
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if resp.StatusCode() != StatusOK {
-			t.Fatalf("unexpected status code for the first connection: %d. Expecting %d",
-				resp.StatusCode(), StatusOK)
+			panic(fmt.Errorf("unexpected status code for the first connection: %d. Expecting %d",
+				resp.StatusCode(), StatusOK))
 		}
 		if string(resp.Body()) != "OK" {
-			t.Fatalf("unexpected body for the first connection: %q. Expecting %q", resp.Body(), "OK")
+			panic(fmt.Errorf("unexpected body for the first connection: %q. Expecting %q", resp.Body(), "OK"))
 		}
 		close(clientCh)
 	}()
@@ -539,7 +539,7 @@ func TestServerConcurrencyLimit(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -548,35 +548,35 @@ func TestServerConcurrencyLimit(t *testing.T) {
 	go func() {
 		c1, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		c2, err := ln.Dial()
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		br := bufio.NewReader(c2)
 		var resp Response
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if resp.StatusCode() != StatusServiceUnavailable {
-			t.Fatalf("unexpected status code for the second connection: %d. Expecting %d",
-				resp.StatusCode(), StatusServiceUnavailable)
+			panic(fmt.Errorf("unexpected status code for the second connection: %d. Expecting %d",
+				resp.StatusCode(), StatusServiceUnavailable))
 		}
 
 		if _, err = c1.Write([]byte("GET / HTTP/1.1\r\nHost: aa\r\n\r\n")); err != nil {
-			t.Fatalf("unexpected error when writing to the first connection: %s", err)
+			panic(fmt.Errorf("unexpected error when writing to the first connection: %s", err))
 		}
 		br = bufio.NewReader(c1)
 		if err = resp.Read(br); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		if resp.StatusCode() != StatusOK {
-			t.Fatalf("unexpected status code for the first connection: %d. Expecting %d",
-				resp.StatusCode(), StatusOK)
+			panic(fmt.Errorf("unexpected status code for the first connection: %d. Expecting %d",
+				resp.StatusCode(), StatusOK))
 		}
 		if string(resp.Body()) != "OK" {
-			t.Fatalf("unexpected body for the first connection: %q. Expecting %q", resp.Body(), "OK")
+			panic(fmt.Errorf("unexpected body for the first connection: %q. Expecting %q", resp.Body(), "OK"))
 		}
 		close(clientCh)
 	}()
@@ -662,7 +662,7 @@ func TestServerServeTLSEmbed(t *testing.T) {
 			ctx.WriteString("success")
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -687,11 +687,11 @@ func TestServerServeTLSEmbed(t *testing.T) {
 		br := bufio.NewReader(tlsConn)
 		var resp Response
 		if err := resp.Read(br); err != nil {
-			t.Fatalf("unexpected error")
+			panic(fmt.Errorf("unexpected error"))
 		}
 		body := resp.Body()
 		if string(body) != "success" {
-			t.Fatalf("unexpected response body %q. Expecting %q", body, "success")
+			panic(fmt.Errorf("unexpected response body %q. Expecting %q", body, "success"))
 		}
 		close(respCh)
 	}()
@@ -770,7 +770,7 @@ Connection: close
 	ch := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -788,25 +788,25 @@ Connection: close
 	respCh := make(chan struct{})
 	go func() {
 		if err := resp.Read(br); err != nil {
-			t.Fatalf("error when reading response: %s", err)
+			panic(fmt.Errorf("error when reading response: %s", err))
 		}
 		if resp.StatusCode() != StatusSeeOther {
-			t.Fatalf("unexpected status code %d. Expecting %d", resp.StatusCode(), StatusSeeOther)
+			panic(fmt.Errorf("unexpected status code %d. Expecting %d", resp.StatusCode(), StatusSeeOther))
 		}
 		loc := resp.Header.Peek("Location")
 		if string(loc) != "http://qwerty.com/" {
-			t.Fatalf("unexpected location %q. Expecting %q", loc, "http://qwerty.com/")
+			panic(fmt.Errorf("unexpected location %q. Expecting %q", loc, "http://qwerty.com/"))
 		}
 
 		if err := resp.Read(br); err != nil {
-			t.Fatalf("error when reading the second response: %s", err)
+			panic(fmt.Errorf("error when reading the second response: %s", err))
 		}
 		if resp.StatusCode() != StatusOK {
-			t.Fatalf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusOK)
+			panic(fmt.Errorf("unexpected status code: %d. Expecting %d", resp.StatusCode(), StatusOK))
 		}
 		body := resp.Body()
 		if string(body) != "non-upload" {
-			t.Fatalf("unexpected body %q. Expecting %q", body, "non-upload")
+			panic(fmt.Errorf("unexpected body %q. Expecting %q", body, "non-upload"))
 		}
 		close(respCh)
 	}()
@@ -839,7 +839,7 @@ func TestServerReduceMemoryUsageSerial(t *testing.T) {
 	ch := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -868,7 +868,7 @@ func TestServerReduceMemoryUsageConcurrent(t *testing.T) {
 	ch := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -915,7 +915,7 @@ func testServerRequests(t *testing.T, ln *fasthttputil.InmemoryListener) {
 		respCh := make(chan struct{})
 		go func() {
 			if err = resp.Read(br); err != nil {
-				t.Fatalf("unexpected error when reading response on iteration %d: %s", i, err)
+				panic(fmt.Errorf("unexpected error when reading response on iteration %d: %s", i, err))
 			}
 			close(respCh)
 		}()
@@ -942,7 +942,7 @@ func TestServerHTTP10ConnectionKeepAlive(t *testing.T) {
 			}
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -979,10 +979,10 @@ func TestServerHTTP10ConnectionKeepAlive(t *testing.T) {
 	go func() {
 		tail, err := ioutil.ReadAll(br)
 		if err != nil {
-			t.Fatalf("error when reading tail: %s", err)
+			panic(fmt.Errorf("error when reading tail: %s", err))
 		}
 		if len(tail) > 0 {
-			t.Fatalf("unexpected non-zero tail %q", tail)
+			panic(fmt.Errorf("unexpected non-zero tail %q", tail))
 		}
 		close(tailCh)
 	}()
@@ -1024,7 +1024,7 @@ func TestServerHTTP10ConnectionClose(t *testing.T) {
 			ctx.Response.Header.Set("Connection", "keep-alive")
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 		close(ch)
 	}()
@@ -1052,10 +1052,10 @@ func TestServerHTTP10ConnectionClose(t *testing.T) {
 	go func() {
 		tail, err := ioutil.ReadAll(br)
 		if err != nil {
-			t.Fatalf("error when reading tail: %s", err)
+			panic(fmt.Errorf("error when reading tail: %s", err))
 		}
 		if len(tail) > 0 {
-			t.Fatalf("unexpected non-zero tail %q", tail)
+			panic(fmt.Errorf("unexpected non-zero tail %q", tail))
 		}
 		close(tailCh)
 	}()
@@ -1372,7 +1372,7 @@ func TestServeConnNonHTTP11KeepAlive(t *testing.T) {
 			ctx.SuccessString("aaa/bbb", "foobar")
 		})
 		if err != nil {
-			t.Fatalf("unexpected error in ServeConn: %s", err)
+			panic(fmt.Errorf("unexpected error in ServeConn: %s", err))
 		}
 		close(ch)
 	}()
@@ -1700,7 +1700,7 @@ func TestTimeoutHandlerSuccess(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexepcted error: %s", err)
+			panic(fmt.Errorf("unexepcted error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -1711,10 +1711,10 @@ func TestTimeoutHandlerSuccess(t *testing.T) {
 		go func() {
 			conn, err := ln.Dial()
 			if err != nil {
-				t.Fatalf("unexepcted error: %s", err)
+				panic(fmt.Errorf("unexepcted error: %s", err))
 			}
 			if _, err = conn.Write([]byte("GET / HTTP/1.1\r\nHost: google.com\r\n\r\n")); err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			br := bufio.NewReader(conn)
 			verifyResponse(t, br, StatusOK, "aaa/bbb", "real response")
@@ -1756,7 +1756,7 @@ func TestTimeoutHandlerTimeout(t *testing.T) {
 	serverCh := make(chan struct{})
 	go func() {
 		if err := s.Serve(ln); err != nil {
-			t.Fatalf("unexepcted error: %s", err)
+			panic(fmt.Errorf("unexepcted error: %s", err))
 		}
 		close(serverCh)
 	}()
@@ -1767,10 +1767,10 @@ func TestTimeoutHandlerTimeout(t *testing.T) {
 		go func() {
 			conn, err := ln.Dial()
 			if err != nil {
-				t.Fatalf("unexepcted error: %s", err)
+				panic(fmt.Errorf("unexepcted error: %s", err))
 			}
 			if _, err = conn.Write([]byte("GET / HTTP/1.1\r\nHost: google.com\r\n\r\n")); err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			br := bufio.NewReader(conn)
 			verifyResponse(t, br, StatusRequestTimeout, string(defaultContentType), "timeout!!!")

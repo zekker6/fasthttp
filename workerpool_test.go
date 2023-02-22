@@ -1,6 +1,7 @@
 package fasthttp
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"testing"
@@ -104,20 +105,20 @@ func testWorkerPoolMaxWorkersCount(t *testing.T) {
 		go func() {
 			conn, err := ln.Dial()
 			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			if _, err = conn.Write([]byte("foobar")); err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			data, err := ioutil.ReadAll(conn)
 			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			if string(data) != "baz" {
-				t.Fatalf("unexpected value read: %q. Expecting %q", data, "baz")
+				panic(fmt.Errorf("unexpected value read: %q. Expecting %q", data, "baz"))
 			}
 			if err = conn.Close(); err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			clientCh <- struct{}{}
 		}()
@@ -135,7 +136,7 @@ func testWorkerPoolMaxWorkersCount(t *testing.T) {
 
 	go func() {
 		if _, err := ln.Dial(); err != nil {
-			t.Fatalf("unexpected error: %s", err)
+			panic(fmt.Errorf("unexpected error: %s", err))
 		}
 	}()
 	conn, err := ln.Accept()
