@@ -3,6 +3,7 @@ package fasthttp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -316,7 +317,9 @@ func (c *Client) DoTimeout(req *Request, resp *Response, timeout time.Duration) 
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *Client) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
-	return clientDoDeadline(req, resp, deadline, c)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
 // Do performs the given http request and fills the given http response.
@@ -869,17 +872,44 @@ func (c *HostClient) DoTimeout(req *Request, resp *Response, timeout time.Durati
 // It is recommended obtaining req and resp via AcquireRequest
 // and AcquireResponse in performance-critical code.
 func (c *HostClient) DoDeadline(req *Request, resp *Response, deadline time.Time) error {
-	return clientDoDeadline(req, resp, deadline, c)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	return clientDoDeadline(ctx, req, resp, c)
+}
+
+// DoCtx performs the given request and waits for response until
+// the given context is cancelled or deadline is reached.
+//
+// Request must contain at least non-zero RequestURI with full url (including
+// scheme and host) or non-zero Host header + RequestURI.
+//
+// The function doesn't follow redirects. Use Get* for following redirects.
+//
+// Response is ignored if resp is nil.
+//
+// ErrTimeout is returned if the response wasn't returned until
+// the deadline provided by the given context.
+//
+// ErrNoFreeConns is returned if all HostClient.MaxConns connections
+// to the host are busy.
+//
+// It is recommended obtaining req and resp via AcquireRequest
+// and AcquireResponse in performance-critical code.
+func (c *HostClient) DoCtx(ctx context.Context, req *Request, resp *Response) error {
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
 func clientDoTimeout(req *Request, resp *Response, timeout time.Duration, c clientDoer) error {
 	deadline := time.Now().Add(timeout)
-	return clientDoDeadline(req, resp, deadline, c)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	return clientDoDeadline(ctx, req, resp, c)
 }
 
-func clientDoDeadline(req *Request, resp *Response, deadline time.Time, c clientDoer) error {
-	timeout := -time.Since(deadline)
-	if timeout <= 0 {
+func clientDoDeadline(ctx context.Context, req *Request, resp *Response, c clientDoer) error {
+	d, ok := ctx.Deadline()
+	timeout := -time.Since(d)
+	if timeout <= 0 || !ok {
 		return ErrTimeout
 	}
 
@@ -910,7 +940,6 @@ func clientDoDeadline(req *Request, resp *Response, deadline time.Time, c client
 		ch <- c.Do(reqCopy, respCopy)
 	}()
 
-	tc := acquireTimer(timeout)
 	var err error
 	select {
 	case err = <-ch:
@@ -921,10 +950,12 @@ func clientDoDeadline(req *Request, resp *Response, deadline time.Time, c client
 		ReleaseResponse(respCopy)
 		ReleaseRequest(reqCopy)
 		errorChPool.Put(chv)
-	case <-tc.C:
-		err = ErrTimeout
+	case <-ctx.Done():
+		err = ctx.Err()
+		if errors.Is(err, context.DeadlineExceeded) {
+			err = ErrTimeout
+		}
 	}
-	releaseTimer(tc)
 
 	return err
 }
