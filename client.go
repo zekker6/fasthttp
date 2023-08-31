@@ -426,7 +426,7 @@ func (c *Client) mCleaner(m map[string]*HostClient) {
 		t := time.Now()
 		c.mLock.Lock()
 		for k, v := range m {
-			if t.Sub(v.LastUseTime()) > time.Minute {
+			if t.Sub(v.LastUseTime()) > c.MaxIdleConnDuration {
 				delete(m, k)
 			}
 		}
