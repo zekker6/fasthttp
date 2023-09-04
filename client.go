@@ -422,11 +422,15 @@ func (c *Client) Do(req *Request, resp *Response) error {
 
 func (c *Client) mCleaner(m map[string]*HostClient) {
 	mustStop := false
+	unusedTimeout := c.MaxIdleConnDuration
+	if unusedTimeout <= 0 {
+		unusedTimeout = time.Minute
+	}
 	for {
 		t := time.Now()
 		c.mLock.Lock()
 		for k, v := range m {
-			if t.Sub(v.LastUseTime()) > c.MaxIdleConnDuration {
+			if t.Sub(v.LastUseTime()) > unusedTimeout {
 				delete(m, k)
 			}
 		}
